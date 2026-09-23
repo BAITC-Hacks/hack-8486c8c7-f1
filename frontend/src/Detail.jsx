@@ -1,9 +1,454 @@
 import React from 'react';
-import {ChevronLeft,Bot,Rocket,ArrowUpRight,Sparkles,Trophy,Zap,Gift,Coins,Check,Clock,ExternalLink,CheckCircle2,X} from 'lucide-react';
-import {go,date,spotlight,LABELS,LEVELS,PRIZES,STAGES,LevelIcon,Badge,Ring,ScoreBreakdown,QuestList,Status} from './ui';
-export function TaskDetail({task:t,role,busy,onAnalyze,onPublish,onApply,onBox,onBuy,apps,teams}){
- return <><button className="back" onClick={()=>go('catalog')}><ChevronLeft size={16}/>Все задачи</button><div className="detail-heading"><div><div className="flex flex-wrap gap-2 items-center mb-4"><span className="topic-label">{t.topic}</span><Badge task={t}/><span className="muted small-text">{t.published?'Опубликована':'Черновик · виден бизнесу'}</span></div><h1>{t.title}</h1><p>{t.company} · {apps.length} откликов · {date(t.created_at)}</p></div><Ring score={t.score}/></div><div className="detail-actions">{role==='Business'?<><button className="primary" onClick={onAnalyze} disabled={busy}><Bot size={18}/>Улучшить с Sana Bot</button><button className="secondary" onClick={()=>go('edit/'+t.id)}>Редактировать карточку</button>{!t.published&&<button className="secondary" onClick={onPublish} disabled={busy||!t.confirmed}><Rocket size={17}/>Опубликовать</button>}</>:<button className="primary" disabled={busy||!t.published} onClick={onApply}><ArrowUpRight size={18}/>Откликнуться командой</button>}</div><div className="detail-grid"><div><section className="panel brief-content">{Object.entries(LABELS).map(([k,label])=><div key={k}><h3>{label}</h3><p className={!t.fields[k]?'muted':''}>{t.fields[k]||'Пока не уточнено — обсудите с бизнесом.'}</p></div>)}</section><section className="panel mt-5"><div className="section-heading"><h2>Challenge Evolution</h2><Sparkles size={19}/></div><div className="evolution-timeline">{LEVELS.map((l,i)=><div className={i<=t.level_index?'reached':''} key={l}><span><LevelIcon index={i} size={22}/></span><b>{l}</b><small>{['0–39','40–69','70–89','90–100'][i]}</small></div>)}</div><div className="history">{t.history.length?t.history.map((h,i)=><div key={i}><span className="history-dot"/><div><b>{h.score}/100 · {h.level}</b><small>{h.title} · {date(h.at)}</small></div></div>):<p className="muted">История появится после подтверждения карточки.</p>}</div></section><section className="panel mt-5"><h2 className="mb-5">Achievements</h2><div className="achievement-row">{t.achievements.length?t.achievements.map(a=><span key={a}><Trophy size={16}/>{a}</span>):<p className="muted">Первые достижения впереди.</p>}</div></section>{role==='Business'&&<section className="panel mt-5"><div className="section-heading"><h2>Квесты задачи</h2><span className="xp-pill"><Zap size={14}/>{t.xp} XP</span></div><QuestList task={t}/></section>}<section className="panel mt-5"><div className="section-heading"><h2>Отклики · {apps.length}</h2>{role==='Business'&&<button className="text-button purple-text" onClick={()=>go('dashboard')}>Управлять <ArrowUpRight size={14}/></button>}</div>{apps.map(a=><div className="mini-app" key={a.id}><strong>{teams.find(tm=>tm.id===a.team_id)?.name}</strong><span>{a.duration}</span><Status status={a.status}/></div>)}{!apps.length&&<p className="muted">Здесь появятся идеи студенческих команд.</p>}</section></div><aside><section className="panel"><div className="section-heading"><h3>Task Readiness</h3><b className="purple-text">{t.score}/100</b></div><ScoreBreakdown task={t}/></section>{role==='Business'&&<><section className="mystery-panel"><Gift size={38}/><span className="eyebrow">НАГРАДА ЗА НОВЫЙ УРОВЕНЬ</span><h2>Mystery Box</h2><p>Оформление или Spotlight.<br/>Внутри — маленький сюрприз.</p><button onClick={onBox} disabled={busy||!t.boxes}>Открыть коробку <span>{t.boxes}</span></button><small>По 1 коробке за достижение 40, 70 и 90 баллов</small></section><section className="panel mt-5"><h3 className="mb-2">Quest Shop</h3><p className="muted small-text mb-4">Косметика для этой задачи.<br/>Рейтинг купить нельзя.</p>{[['highlight',50],['spotlight',100],['aurora',150]].map(([key,cost])=><div className="shop-row" key={key}><span><Sparkles size={16}/>{PRIZES[key]}</span><button disabled={busy||t.cosmetics.includes(key)||(key==='spotlight'&&spotlight(t))} onClick={()=>onBuy(key)}>{t.cosmetics.includes(key)||(key==='spotlight'&&spotlight(t))?<Check size={16}/>:<>{cost}<Coins size={13}/></>}</button></div>)}</section></>}</aside></div></>;
+import {
+  ChevronLeft,
+  Bot,
+  Rocket,
+  ArrowUpRight,
+  Sparkles,
+  Trophy,
+  Coins,
+  Check,
+  Clock,
+  ExternalLink,
+  CheckCircle2,
+  X,
+  Zap
+} from 'lucide-react';
+
+import {
+  go,
+  date,
+  spotlight,
+  LABELS,
+  LEVELS,
+  PRIZES,
+  STAGES,
+  LevelIcon,
+  Badge,
+  Ring,
+  ScoreBreakdown,
+  Status
+} from './ui';
+
+
+export function TaskDetail({
+  task: t,
+  role,
+  busy,
+  onAnalyze,
+  onPublish,
+  onApply,
+  onBuy,
+  apps,
+  teams
+}) {
+  return (
+    <>
+      <button
+        className="back"
+        onClick={() => go('catalog')}
+      >
+        <ChevronLeft size={16} />
+        Все задачи
+      </button>
+
+      <div className="detail-heading">
+        <div>
+          <div className="flex flex-wrap gap-2 items-center mb-4">
+            <span className="topic-label">
+              {t.topic}
+            </span>
+
+            <Badge task={t} />
+
+            <span className="muted small-text">
+              {t.published
+                ? 'Опубликована'
+                : 'Черновик · виден бизнесу'}
+            </span>
+          </div>
+
+          <h1>{t.title}</h1>
+
+          <p>
+            {t.company} · {apps.length} откликов ·{' '}
+            {date(t.created_at)}
+          </p>
+        </div>
+
+        <Ring score={t.score} />
+      </div>
+
+      <div className="detail-actions">
+        {role === 'Business' ? (
+          <>
+            <button
+              className="primary"
+              onClick={onAnalyze}
+              disabled={busy}
+            >
+              <Bot size={18} />
+              Улучшить с Sana Bot
+            </button>
+
+            <button
+              className="secondary"
+              onClick={() => go('edit/' + t.id)}
+            >
+              Редактировать карточку
+            </button>
+
+            {!t.published && (
+              <button
+                className="secondary"
+                onClick={onPublish}
+                disabled={busy || !t.confirmed}
+              >
+                <Rocket size={17} />
+                Опубликовать
+              </button>
+            )}
+          </>
+        ) : (
+          <button
+            className="primary"
+            disabled={busy || !t.published}
+            onClick={onApply}
+          >
+            <ArrowUpRight size={18} />
+            Откликнуться командой
+          </button>
+        )}
+      </div>
+
+      <div className="detail-grid">
+        <div>
+          <section className="panel brief-content">
+            {Object.entries(LABELS).map(([k, label]) => (
+              <div key={k}>
+                <h3>{label}</h3>
+
+                <p className={!t.fields[k] ? 'muted' : ''}>
+                  {t.fields[k] ||
+                    'Пока не уточнено — обсудите с бизнесом.'}
+                </p>
+              </div>
+            ))}
+          </section>
+
+          <section className="panel mt-5">
+            <div className="section-heading">
+              <h2>Challenge Evolution</h2>
+              <Sparkles size={19} />
+            </div>
+
+            <div className="evolution-timeline">
+              {LEVELS.map((level, i) => (
+                <div
+                  className={
+                    i <= t.level_index ? 'reached' : ''
+                  }
+                  key={level}
+                >
+                  <span>
+                    <LevelIcon index={i} size={22} />
+                  </span>
+
+                  <b>{level}</b>
+
+                  <small>
+                    {['0–39', '40–69', '70–89', '90–100'][i]}
+                  </small>
+                </div>
+              ))}
+            </div>
+
+            <div className="history">
+              {t.history.length ? (
+                t.history.map((h, i) => (
+                  <div key={i}>
+                    <span className="history-dot" />
+
+                    <div>
+                      <b>
+                        {h.score}/100 · {h.level}
+                      </b>
+
+                      <small>
+                        {h.title} · {date(h.at)}
+                      </small>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="muted">
+                  История появится после подтверждения карточки.
+                </p>
+              )}
+            </div>
+          </section>
+
+          <section className="panel mt-5">
+            <h2 className="mb-5">
+              Achievements
+            </h2>
+
+            <div className="achievement-row">
+              {t.achievements.length ? (
+                t.achievements.map(a => (
+                  <span key={a}>
+                    <Trophy size={16} />
+                    {a}
+                  </span>
+                ))
+              ) : (
+                <p className="muted">
+                  Первые достижения впереди.
+                </p>
+              )}
+            </div>
+          </section>
+
+          <section className="panel mt-5">
+            <div className="section-heading">
+              <h2>
+                Отклики · {apps.length}
+              </h2>
+
+              {role === 'Business' && (
+                <button
+                  className="text-button purple-text"
+                  onClick={() => go('dashboard')}
+                >
+                  Управлять
+                  <ArrowUpRight size={14} />
+                </button>
+              )}
+            </div>
+
+            {apps.map(a => (
+              <div
+                className="mini-app"
+                key={a.id}
+              >
+                <strong>
+                  {
+                    teams.find(
+                      tm => tm.id === a.team_id
+                    )?.name
+                  }
+                </strong>
+
+                <span>{a.duration}</span>
+
+                <Status status={a.status} />
+              </div>
+            ))}
+
+            {!apps.length && (
+              <p className="muted">
+                Здесь появятся идеи студенческих команд.
+              </p>
+            )}
+          </section>
+        </div>
+
+        <aside>
+          <section className="panel">
+            <div className="section-heading">
+              <h3>Task Readiness</h3>
+
+              <b className="purple-text">
+                {t.score}/100
+              </b>
+            </div>
+
+            <ScoreBreakdown task={t} />
+          </section>
+
+          {role === 'Business' && (
+            <section className="panel mt-5">
+              <h3 className="mb-2">
+                Quest Shop
+              </h3>
+
+              <p className="muted small-text mb-4">
+                Косметика для этой задачи.
+                <br />
+                Рейтинг купить нельзя.
+              </p>
+
+              {[
+                ['highlight', 50],
+                ['spotlight', 100],
+                ['aurora', 150]
+              ].map(([key, cost]) => {
+                const owned =
+                  t.cosmetics.includes(key) ||
+                  (
+                    key === 'spotlight' &&
+                    spotlight(t)
+                  );
+
+                return (
+                  <div
+                    className="shop-row"
+                    key={key}
+                  >
+                    <span>
+                      <Sparkles size={16} />
+                      {PRIZES[key]}
+                    </span>
+
+                    <button
+                      disabled={busy || owned}
+                      onClick={() => onBuy(key)}
+                    >
+                      {owned ? (
+                        <Check size={16} />
+                      ) : (
+                        <>
+                          {cost}
+                          <Coins size={13} />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
+            </section>
+          )}
+        </aside>
+      </div>
+    </>
+  );
 }
-export function Application({app:a,task,team,role,busy,decide,progress}){
- return <article className="panel application"><div className="application-head"><span className="avatar">{team?.name.slice(0,2)}</span><div><h3>{team?.name}</h3><a href={'#task/'+a.challenge_id}>{task?.title||'Challenge'}</a></div><Status status={a.status}/></div><div className="application-body"><div><h4>Идея решения</h4><p>{a.idea}</p><h4>План</h4><p>{a.plan}</p></div><div className="application-meta"><span><Clock size={16}/>{a.duration}</span>{a.prototype?<a href={a.prototype} target="_blank" rel="noreferrer">Прототип <ExternalLink size={14}/></a>:<span className="muted">Прототип пока не приложен</span>}<div className="tags">{team?.skills.map(s=><span key={s}>{s}</span>)}</div></div></div>{a.milestones.length>0&&<div className="milestones">{a.milestones.map(m=><div key={m.stage}><CheckCircle2 size={16}/><span><b>{STAGES[m.stage]} · +{m.xp} XP</b><small>{m.evidence}</small></span></div>)}</div>}{role==='Business'&&<div className="application-actions"><button className="primary" disabled={busy||a.status==='selected'} onClick={()=>decide('selected')}><Check size={16}/>Select · Выбрать</button><button className="secondary" disabled={busy||a.status==='rejected'} onClick={()=>decide('rejected')}><X size={16}/>Reject · Отклонить</button>{a.status==='selected'&&<button className="secondary" disabled={busy||a.milestones.length===3} onClick={progress}><Zap size={16}/>Подтвердить этап</button>}</div>}</article>;
+
+
+export function Application({
+  app: a,
+  task,
+  team,
+  role,
+  busy,
+  decide,
+  progress
+}) {
+  return (
+    <article className="panel application">
+      <div className="application-head">
+        <span className="avatar">
+          {team?.name.slice(0, 2)}
+        </span>
+
+        <div>
+          <h3>{team?.name}</h3>
+
+          <a href={'#task/' + a.challenge_id}>
+            {task?.title || 'Challenge'}
+          </a>
+        </div>
+
+        <Status status={a.status} />
+      </div>
+
+      <div className="application-body">
+        <div>
+          <h4>Идея решения</h4>
+          <p>{a.idea}</p>
+
+          <h4>План</h4>
+          <p>{a.plan}</p>
+        </div>
+
+        <div className="application-meta">
+          <span>
+            <Clock size={16} />
+            {a.duration}
+          </span>
+
+          {a.prototype ? (
+            <a
+              href={a.prototype}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Прототип
+              <ExternalLink size={14} />
+            </a>
+          ) : (
+            <span className="muted">
+              Прототип пока не приложен
+            </span>
+          )}
+
+          <div className="tags">
+            {team?.skills.map(s => (
+              <span key={s}>{s}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {a.milestones.length > 0 && (
+        <div className="milestones">
+          {a.milestones.map(m => (
+            <div key={m.stage}>
+              <CheckCircle2 size={16} />
+
+              <span>
+                <b>
+                  {STAGES[m.stage]} · +{m.xp} XP
+                </b>
+
+                <small>{m.evidence}</small>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {role === 'Business' && (
+        <div className="application-actions">
+          <button
+            className="primary"
+            disabled={
+              busy ||
+              a.status === 'selected'
+            }
+            onClick={() => decide('selected')}
+          >
+            <Check size={16} />
+            Select · Выбрать
+          </button>
+
+          <button
+            className="secondary"
+            disabled={
+              busy ||
+              a.status === 'rejected'
+            }
+            onClick={() => decide('rejected')}
+          >
+            <X size={16} />
+            Reject · Отклонить
+          </button>
+
+          {a.status === 'selected' && (
+            <button
+              className="secondary"
+              disabled={
+                busy ||
+                a.milestones.length === 3
+              }
+              onClick={progress}
+            >
+              <Zap size={16} />
+              Подтвердить этап
+            </button>
+          )}
+        </div>
+      )}
+    </article>
+  );
 }
