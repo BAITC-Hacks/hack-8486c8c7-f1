@@ -89,7 +89,7 @@ def test_full_journey_and_no_reward_farming(client):
     before = state(client)["wallet"]
     saved = edit(client,t,FULL).json()
     t = saved["task"]
-    assert saved["level_up"] and t["score"] == 100 and t["boxes"] == 3
+    assert saved["level_up"] and t["score"] == 100
     assert state(client)["wallet"]["coins"] > before["coins"]
     wallet = state(client)["wallet"].copy()
     again = edit(client,t,FULL).json()
@@ -113,20 +113,6 @@ def test_full_journey_and_no_reward_farming(client):
     client.post(f"/api/applications/{c['id']}/decision",headers=BUSINESS,json={"status":"selected"})
     assert client.post(f"/api/applications/{c['id']}/progress",headers=BUSINESS,json=body).status_code == 409
     assert state(client)["teams"][0]["xp"] == 100
-
-def test_shop_and_box_do_not_change_score(client):
-    t=state(client)["challenges"][0]
-    path=f"/api/challenges/{t['id']}"
-    before=state(client)["wallet"]["coins"]
-    r=client.post(path+"/purchase",headers=BUSINESS,json={"item":"highlight"})
-    assert r.status_code==200 and r.json()["score"]==100
-    assert state(client)["wallet"]["coins"]==before-50
-    assert client.post(path+"/purchase",headers=BUSINESS,json={"item":"highlight"}).status_code==409
-    r=client.post(path+"/box",headers=BUSINESS).json()
-    assert r["task"]["score"]==100 and r["task"]["boxes"]==0
-    assert client.post(path+"/box",headers=BUSINESS).status_code==400
-    assert client.post(path+"/purchase",headers=BUSINESS,json={"item":"aurora"}).status_code in [400,409]
-    assert client.post(path+"/purchase",headers=BUSINESS,json={"item":"score"}).status_code==422
 
 def test_roles_validation_and_stale_edits(client):
     assert client.post("/api/challenges",headers=STUDENT,json={}).status_code==403
@@ -170,3 +156,55 @@ def test_valid_openai_response(client,monkeypatch):
     assert ai.analyze(task)["mode"]=="openai"
 
 
+def test_existing_cards_get_at_least_three_questions_without_changing_fields(client):
+    # Both a complete card and a weak seeded card can enter the editor directly.
+    for task_id in [1, 5]:
+        before = client.get(f"/api/challenges/{task_id}", headers=BUSINESS).json()
+        response = client.post(f"/api/challenges/{task_id}/analyze", headers=BUSINESS)
+        assert response.status_code == 200
+        result = response.json()
+        assert len(result["questions"]) >= 3
+        assert len({q["field"] for q in result["questions"]}) == len(result["questions"])
+        assert result["task"]["fields"] == before["fields"]
+        assert result["task"]["score"] == before["score"]
+        assert result["task"]["version"] == before["version"] + 1
+        saved = edit(client, result["task"], before["fields"])
+        assert saved.status_code == 200
+
+
+def test_questionnaire_analysis_uses_unsaved_answers_and_keeps_confirmed_score(client):
+    task = new(client)
+    fields = {**FULL, "data": "", "result": "", "success": ""}
+    response = client.post(f"/api/challenges/{task['id']}/analyze", headers=BUSINESS,
+        json={"fields":fields,"topic":"Web","version":task["version"]})
+    assert response.status_code == 200
+    result = response.json()
+    assert {q["field"] for q in result["questions"]} == {"data", "result", "success"}
+    assert any("веб-прототип" in q["question"] for q in result["questions"])
+    assert result["task"]["fields"] == task["fields"]
+    assert result["task"]["score"] == 0
+    assert edit(client,result["task"],FULL).status_code == 200
+    assert client.post(f"/api/challenges/{task['id']}/analyze", headers=BUSINESS,
+        json={"fields":fields,"topic":"Web","version":task["version"]}).status_code == 409
+
+
+def test_complete_questionnaire_gets_three_deeper_questions(client):
+    task = new(client)
+    response = client.post(f"/api/challenges/{task['id']}/analyze", headers=BUSINESS,
+        json={"fields":FULL,"topic":"AI / NLP","version":task["version"]})
+    assert response.status_code == 200
+    questions = response.json()["questions"]
+    assert len(questions) == 3
+    assert {q["field"] for q in questions} == {"data", "success", "constraints"}
+    assert all(ai.DEEPER[q["field"]] in q["question"] for q in questions)
+
+
+def test_ai_questions_about_answered_fields_fall_back_to_gaps(client,monkeypatch):
+    task = new(client)
+    task["fields"] = {**FULL, "data":"", "result":"", "success":""}
+    payload = {"questions":[{"field":k,"question":ai.QUESTIONS[k]} for k in ["context","need","users"]]}
+    monkeypatch.setenv("OPENAI_API_KEY","test-not-real")
+    monkeypatch.setattr(httpx.Client,"post",lambda *a,**k:httpx.Response(200,json={"status":"completed","output":[{"content":[{"type":"output_text","text":json.dumps(payload)}]}]},request=httpx.Request("POST","https://example.com")))
+    result = ai.analyze(task)
+    assert result["mode"] == "fallback"
+    assert {q["field"] for q in result["questions"]} == {"data","result","success"}

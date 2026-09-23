@@ -6,13 +6,13 @@ import {
   ArrowUpRight,
   Sparkles,
   Trophy,
-  Coins,
   Check,
   Clock,
   ExternalLink,
   CheckCircle2,
   X,
-  Zap
+  Zap,
+  Coins
 } from 'lucide-react';
 
 import {
@@ -21,13 +21,13 @@ import {
   spotlight,
   LABELS,
   LEVELS,
-  PRIZES,
   STAGES,
   LevelIcon,
   Badge,
   Ring,
   ScoreBreakdown,
-  Status
+  Status,
+  PRIZES
 } from './ui';
 
 
@@ -37,8 +37,8 @@ export function TaskDetail({
   busy,
   onAnalyze,
   onPublish,
-  onApply,
   onBuy,
+  onApply,
   apps,
   teams
 }) {

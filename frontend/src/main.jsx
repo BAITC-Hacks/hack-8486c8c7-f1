@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client';
 
 import {
   Zap,
+  LineChart,
+  Menu,
   LayoutGrid,
   BriefcaseBusiness,
   Users,
@@ -15,7 +17,6 @@ import {
 
 import {
   go,
-  PRIZES,
   Modal,
   Empty
 } from './ui';
@@ -57,6 +58,7 @@ function App() {
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
   const [modal, setModal] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const locked = useRef(false);
 
@@ -284,7 +286,7 @@ function App() {
 
 
   return (
-    <div className="app">
+    <div className={`app${sidebarOpen ? '' : ' sidebar-collapsed'}`}>
 
       {/* SIDEBAR */}
 
@@ -295,20 +297,28 @@ function App() {
           href="#catalog"
         >
           <span className="brand-mark">
-            <Zap
+            <LineChart
               size={23}
-              fill="currentColor"
             />
           </span>
 
           <span>
-            TaskQuest
+            Stuness
 
             <span className="brand-ai">
               AI
             </span>
           </span>
         </a>
+
+        <button
+          className="sidebar-toggle"
+          type="button"
+          aria-label="Закрыть меню"
+          onClick={() => setSidebarOpen(false)}
+        >
+          <X size={18} />
+        </button>
 
 
         <div className="workspace-label">
@@ -374,6 +384,15 @@ function App() {
 
         <header className="topbar">
 
+          <button
+            className="menu-toggle"
+            type="button"
+            aria-label={sidebarOpen ? 'Закрыть меню' : 'Открыть меню'}
+            onClick={() => setSidebarOpen(open => !open)}
+          >
+            <Menu size={19} />
+          </button>
+
           <div className="breadcrumb">
             Workspace
 
@@ -389,7 +408,7 @@ function App() {
                       ? 'Новая задача'
                       : nav.find(
                           n => n[0] === route
-                        )?.[2] || 'TaskQuest'
+                        )?.[2] || 'Stuness'
               }
             </strong>
           </div>
@@ -565,25 +584,6 @@ function App() {
                         await refresh();
 
                         go(
-                          'task/' +
-                          task.id
-                        );
-
-                        const result =
-                          await api(
-                            '/challenges/' +
-                            task.id +
-                            '/analyze',
-                            'POST'
-                          );
-
-                        await refresh();
-
-                        setToast(
-                          result.notice
-                        );
-
-                        go(
                           'edit/' +
                           task.id
                         );
@@ -616,6 +616,7 @@ function App() {
                     }
                     task={current}
                     busy={busy}
+                    analyze={body => api('/challenges/' + current.id + '/analyze', 'POST', body)}
                     save={body =>
                       act(async () => {
 
@@ -661,30 +662,7 @@ function App() {
                     role={role}
                     busy={busy}
 
-                    onAnalyze={() =>
-                      act(async () => {
-
-                        const result =
-                          await api(
-                            '/challenges/' +
-                            current.id +
-                            '/analyze',
-                            'POST'
-                          );
-
-                        await refresh();
-
-                        setToast(
-                          result.notice
-                        );
-
-                        go(
-                          'edit/' +
-                          current.id
-                        );
-
-                      })
-                    }
+                    onAnalyze={() => go('edit/' + current.id)}
 
                     onPublish={() =>
                       mutate(
@@ -696,6 +674,16 @@ function App() {
                       )
                     }
 
+                    onBuy={item =>
+                      mutate(
+                        '/challenges/' +
+                        current.id +
+                        '/purchase',
+                        { item },
+                        'Покупка оформлена. Оформление применено.'
+                      )
+                    }
+
                     onApply={() => {
                       setError('');
 
@@ -704,17 +692,6 @@ function App() {
                         task: current
                       });
                     }}
-
-                    onBuy={item =>
-                      mutate(
-                        '/challenges/' +
-                        current.id +
-                        '/purchase',
-                        { item },
-                        PRIZES[item] +
-                        ' активировано'
-                      )
-                    }
 
                     apps={
                       apps.filter(
@@ -800,7 +777,7 @@ function App() {
           <footer>
             <span>
               <Zap size={13} />
-              TaskQuest AI
+              Stuness
             </span>
 
             <span>

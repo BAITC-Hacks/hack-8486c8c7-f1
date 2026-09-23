@@ -8,9 +8,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from .db import connect, init_db, read, save, all_rows
-from .models import Draft, Edit, Proposal, Decision, Progress, Purchase
+from .models import Draft, Edit, Proposal, Decision, Progress, Clarification
 from .scoring import enrich, score, FIELDS
-from .game import reward, now, spotlight_until
+from .game import reward, now
 from .seed import seed, new_task
 from .ai import analyze
 
@@ -270,7 +270,7 @@ def create(body: Draft):
         Depends(business)
     ],
 )
-def questions(id: int):
+def questions(id: int, body: Clarification | None = None):
 
     # Сначала читаем задачу,
     # затем освобождаем БД на время AI-запроса.
@@ -282,7 +282,12 @@ def questions(id: int):
             id,
         )
 
-    result = analyze(task)
+    analysis_task = task
+    if body is not None:
+        if body.version != task["version"]:
+            raise HTTPException(409, "Карточка изменилась. Обновите страницу перед анализом.")
+        analysis_task = {**task, "fields": body.fields.model_dump(), "topic": body.topic}
+    result = analyze(analysis_task)
 
     with connect() as db:
 
@@ -739,6 +744,7 @@ def progress(
 # QUEST SHOP
 # =========================================================
 
+<<<<<<< Updated upstream
 @app.post(
     "/api/challenges/{id}/purchase",
 )
@@ -852,6 +858,8 @@ def purchase(
         return enrich(task)
 
 
+=======
+>>>>>>> Stashed changes
 # =========================================================
 # FRONTEND
 # =========================================================

@@ -1,0 +1,29 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "TaskQuest: Docker deploy",
+      "type": "process",
+      "command": "docker",
+      "args": ["compose", "up", "-d", "--build", "--wait", "--wait-timeout", "180"],
+      "options": {"cwd": "${workspaceFolder}"},
+      "problemMatcher": []
+    },
+    {
+      "label": "TaskQuest: Docker logs",
+      "type": "process",
+      "command": "docker",
+      "args": ["compose", "logs", "--tail", "100", "-f", "app"],
+      "options": {"cwd": "${workspaceFolder}"},
+      "problemMatcher": []
+    },
+    {
+      "label": "TaskQuest: Docker stop (keep data)",
+      "type": "process",
+      "command": "docker",
+      "args": ["compose", "down"],
+      "options": {"cwd": "${workspaceFolder}"},
+      "problemMatcher": []
+    }
+  ]
+}

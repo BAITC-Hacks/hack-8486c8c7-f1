@@ -33,6 +33,12 @@ class Edit(Input):
     version: int = Field(ge=1)
 
 
+class Clarification(Input):
+    fields: Brief
+    topic: Literal["AI / NLP", "Data Science", "Web", "Education", "Sustainability"]
+    version: int = Field(ge=1)
+
+
 class Proposal(Input):
     team_id: int = Field(ge=1)
     idea: str = Field(min_length=15, max_length=3000)
@@ -49,10 +55,6 @@ class Progress(Input):
     stage: Literal["discovery", "prototype", "delivery"]
     evidence: str = Field(min_length=15, max_length=2000)
     confirmed: Literal[True]
-
-
-class Purchase(Input):
-    item: Literal["highlight", "spotlight", "aurora"]
 
 
 class Question(Input):
