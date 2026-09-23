@@ -741,9 +741,6 @@ def progress(
 
 @app.post(
     "/api/challenges/{id}/purchase",
-    dependencies=[
-        Depends(business)
-    ],
 )
 def purchase(
     id: int,

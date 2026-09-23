@@ -455,16 +455,20 @@ function App() {
             )}
 
 
-            <div className="balance">
-              <Coins size={17} />
+            <div className="balance" aria-label={`Баланс: ${wallet.coins} монет`}>
+              <div className="balance-value">
+                <Coins size={17} />
+                <b>
+                  {wallet.coins}
+                </b>
+                <span>
+                  Coins
+                </span>
+              </div>
 
-              <b>
-                {wallet.coins}
-              </b>
-
-              <span>
-                Sana Coins
-              </span>
+              <small>
+                В задачах можно тратить на улучшения
+              </small>
             </div>
 
 

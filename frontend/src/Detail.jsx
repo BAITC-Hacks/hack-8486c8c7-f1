@@ -266,56 +266,78 @@ export function TaskDetail({
             <ScoreBreakdown task={t} />
           </section>
 
-          {role === 'Business' && (
-            <section className="panel mt-5">
-              <h3 className="mb-2">
-                Quest Shop
-              </h3>
+          {(role === 'Business' || role === 'Student') && (
+            <section className="panel mt-5 shop-panel">
+              <div className="shop-header">
+                <div>
+                  <h3>Магазин улучшений</h3>
+                  <p className="muted small-text">
+                    Тратить монеты можно прямо здесь.
+                  </p>
+                </div>
 
-              <p className="muted small-text mb-4">
-                Косметика для этой задачи.
-                <br />
-                Рейтинг купить нельзя.
-              </p>
+                <span className="shop-pill">
+                  <Coins size={14} />
+                  spendable
+                </span>
+              </div>
 
-              {[
-                ['highlight', 50],
-                ['spotlight', 100],
-                ['aurora', 150]
-              ].map(([key, cost]) => {
-                const owned =
-                  t.cosmetics.includes(key) ||
-                  (
-                    key === 'spotlight' &&
-                    spotlight(t)
-                  );
+              <div className="shop-grid">
+                {[
+                  ['highlight', 50],
+                  ['spotlight', 100],
+                  ['aurora', 150]
+                ].map(([key, cost]) => {
+                  const owned =
+                    t.cosmetics.includes(key) ||
+                    (
+                      key === 'spotlight' &&
+                      spotlight(t)
+                    );
 
-                return (
-                  <div
-                    className="shop-row"
-                    key={key}
-                  >
-                    <span>
-                      <Sparkles size={16} />
-                      {PRIZES[key]}
-                    </span>
-
-                    <button
-                      disabled={busy || owned}
-                      onClick={() => onBuy(key)}
+                  return (
+                    <div
+                      className="shop-item"
+                      key={key}
                     >
-                      {owned ? (
-                        <Check size={16} />
-                      ) : (
-                        <>
-                          {cost}
-                          <Coins size={13} />
-                        </>
-                      )}
-                    </button>
-                  </div>
-                );
-              })}
+                      <div className="shop-item-top">
+                        <span className="shop-icon">
+                          <Sparkles size={14} />
+                        </span>
+
+                        <strong>
+                          {PRIZES[key]}
+                        </strong>
+                      </div>
+
+                      <small>
+                        {owned
+                          ? 'Уже активировано'
+                          : `Купить за ${cost} Coins`}
+                      </small>
+
+                      <button
+                        className={owned ? 'shop-button owned' : 'shop-button'}
+                        disabled={busy || owned}
+                        onClick={() => onBuy(key)}
+                      >
+                        {owned ? (
+                          <>
+                            <Check size={16} />
+                            Куплено
+                          </>
+                        ) : (
+                          <>
+                            Купить
+                            <Coins size={13} />
+                            {cost}
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </section>
           )}
         </aside>
