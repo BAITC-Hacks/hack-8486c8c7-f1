@@ -15,7 +15,7 @@ def connect():
     db.row_factory = sqlite3.Row
     db.execute("PRAGMA foreign_keys=ON")
     try:
-        # Serializes reward, purchase and milestone mutations, including read-modify-write.
+        # Serializes reward, purchase and milestone mutations, including read-modify-write
         db.execute("BEGIN IMMEDIATE")
         yield db
         db.commit()
